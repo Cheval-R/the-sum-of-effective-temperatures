@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Effective Temperature Sum</title>
+  <link rel="stylesheet" href="./css/style.min.css">
+</head>
+
+<body>
+  <main>
+    <section class="weather">
+      <div class="container">
+        <div class="weather__wrapper">
+          <h1 class="weather__title">Прогнозирование сроков уборки кукурузы на силос</h1>
+          <div class="weather__input">
+            <input type="checkbox" name="method" id="method">
+            <form class="weather__form" id="location-form" novalidate>
+              <fieldset class="client-data">
+                <label class="client-data__label client-data__farm" for="farm-name">
+                  <span>Название агрофирмы</span>
+                  <input name="farm-name" id="farm-name" type="text" required>
+                </label>
+                <label class="client-data__label client-data__name" for="client-name">
+                  <span>Ваше имя</span>
+                  <input name="client-name" id="client-name" type="text" required>
+                </label>
+                <label class="client-data__label client-data__phone" for="phone">
+                  <span>Телефон</span>
+                  <input type="tel" name="phone" id="phone" pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" placeholder="+7 999 999 99 99" required>
+                </label>
+                <label class="client-data__label" for="client-hybrid">
+                  <span>Гибрид</span>
+                  <input name="client-hybrid" id="client-hybrid" type="text" required>
+                </label>
+              </fieldset>
+              <fieldset class="coordinates">
+                <legend>Расположение полей</legend>
+                <label class="coordinates__wrapper" for="latitude">
+                  <span>Широта:</span>
+                  <input type="number" id="latitude" name="latitude" value="55.786949" placeholder="55.786949" step="any" min="-90.000000" max="90.000000" maxlength="10" required>
+                </label>
+                <label class="coordinates__wrapper" for="longitude">
+                  <span>Долгота:</span>
+                  <input type="number" id="longitude" name="longitude" value="49.121358" placeholder="49.121358" step="any" min="-180.000000" max="180.000000" maxlength="11" required>
+                </label>
+              </fieldset>
+              <fieldset class="date">
+                <label class="date__wrapper" for="start-date">
+                  <span>Дата сева:</span>
+                  <input " class=" datepicker" id="start-date" name="start-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
+                </label>
+                <label class="date__wrapper" for="end-date">
+                  <span>Конечная дата:</span>
+                  <input class="datepicker" id="end-date" name="end-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
+                </label>
+              </fieldset>
+              <label class="base-temp" for="base-temp" title="Температура при которой начинается вегетация гибрида">
+                <span>Базовая температура (°C):</span>
+                <input type="number" id="base-temp" name="base-temp" value="10" max="20" min="0" placeholder="5" required>
+              </label>
+              <div class="map" id="map" height="300" width="600"></div>
+              <button class="calculate" type="submit">Рассчитать</button>
+            </form>
+          </div>
+          <div class="output" id="output">
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="https://api-maps.yandex.ru/v3/?apikey=62e3fbe2-5fc5-4b7d-b9f0-86acc43edb26&lang=ru_RU"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.2.0/math.js"></script>
+  <script type="module" src="./js/script.min.js"></script>
+
+</body>
+
+</html>

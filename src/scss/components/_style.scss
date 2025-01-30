@@ -1,0 +1,235 @@
+.weather {
+  text-align: center;
+  &__title {
+    margin-bottom: 30px;
+    @media (max-width: 450px) {
+      font-size: 26px;
+    }
+  }
+  &__wrapper {
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  &__form {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "client map"
+      "coordinates map"
+      "date map"
+      "base button";
+
+    @media (max-width: 950px) {
+      grid-template-columns: auto;
+      grid-template-areas:
+        "client"
+        "coordinates"
+        "date"
+        "base"
+        "map"
+        "button";
+    }
+  }
+}
+
+.weather__input {
+  margin-bottom: 15px;
+}
+
+.map {
+  grid-area: map;
+  text-align: center;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+input,
+button {
+  padding: 10px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Coordinates */
+.coordinates {
+  grid-area: coordinates;
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+}
+.coordinates__wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Datepicker */
+.date {
+  grid-area: date;
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+}
+
+.date__wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+input {
+  text-align: center;
+}
+
+input[type="number"]:hover,
+input[type="number"]:focus {
+  -moz-appearance: number-input;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Map */
+.marker-class {
+  position: relative;
+  width: 5px;
+  height: 5px;
+  /* background-color: rebeccapurple; */
+  transform: translate(-50%, -100%);
+
+  content: "";
+
+  display: block;
+  background-image: url("./../img/pin.svg");
+  width: 20px;
+  height: 32px;
+}
+.map {
+  width: auto;
+  max-width: 600px;
+  height: 400px;
+  @media (max-width: 450px) {
+    height: 250px;
+  }
+}
+.ymaps3x0--map {
+  width: auto !important;
+  height: auto !important;
+}
+
+.base-temp {
+  grid-area: base;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+
+  span {
+    text-underline-offset: 4px;
+    text-decoration: underline dotted;
+  }
+}
+
+// Client Data
+
+.client-data {
+  grid-area: client;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 225px);
+  justify-content: space-evenly;
+
+  gap: 5px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 225px);
+    grid-template-rows: repeat(2, 1fr);
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(auto-fill, 225px);
+    grid-template-rows: auto;
+  }
+}
+
+.client-data__label {
+  display: flex;
+  flex-direction: column;
+}
+
+.client-data__farm {
+}
+.client-data__name {
+}
+.client-data__phone {
+}
+
+.output {
+  padding: 25px 0;
+  &__title {
+    margin-bottom: 20px;
+  }
+}
+
+.calculate {
+  grid-area: button;
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 45px;
+  height: 26px;
+  cursor: pointer;
+  border-radius: 30px;
+  border: 3px solid #007236;
+  cursor: pointer;
+  position: relative;
+  transition: 0.3s;
+}
+
+input[type="checkbox"]:checked {
+  background: #ec4e25;
+  border: 3px solid #ec4e25;
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: #007236;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  transition: 0.3s;
+}
+
+input[type="checkbox"]:checked::before {
+  background: #ec4e25;
+  border: none;
+  left: 21px;
+  background: white;
+}
