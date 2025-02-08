@@ -1,3 +1,5 @@
+@use "./var";
+
 .weather {
   text-align: center;
   &__title {
@@ -195,41 +197,56 @@ input[type="number"]::-webkit-outer-spin-button {
   grid-area: button;
 }
 
-input[type="checkbox"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  width: 45px;
-  height: 26px;
-  cursor: pointer;
-  border-radius: 30px;
-  border: 3px solid #007236;
-  cursor: pointer;
-  position: relative;
-  transition: 0.3s;
-}
+.method {
+  font-weight: 600;
+  font-size: 22px;
+  display: flex;
+  // flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  &__input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 45px;
+    height: 26px;
+    cursor: pointer;
+    border-radius: 30px;
+    border: 3px solid var.$text-dark-grey;
+    cursor: pointer;
+    position: relative;
+    transition: 0.3s;
+  }
 
-input[type="checkbox"]:checked {
-  background: #ec4e25;
-  border: 3px solid #ec4e25;
-}
+  &__input:checked {
+    background: #007236;
+    border: 3px solid #007236;
+  }
 
-input[type="checkbox"]::before {
-  content: "";
-  position: absolute;
-  height: 18px;
-  width: 18px;
-  border-radius: 50%;
-  background: #007236;
-  top: 50%;
-  left: 2px;
-  transform: translateY(-50%);
-  transition: 0.3s;
-}
+  &__input::before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: var.$text-dark-grey;
+    top: 50%;
+    left: 2px;
+    transform: translateY(-50%);
+    transition: 0.3s;
+  }
 
-input[type="checkbox"]:checked::before {
-  background: #ec4e25;
-  border: none;
-  left: 21px;
-  background: white;
+  &__input:checked::before {
+    background: #007236;
+    border: none;
+    left: 21px;
+    background: white;
+  }
+
+  &__input:disabled {
+    border: 3px solid grey;
+    &::before {
+      background-color: grey;
+    }
+  }
 }

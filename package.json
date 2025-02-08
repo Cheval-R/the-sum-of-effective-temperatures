@@ -44,8 +44,17 @@
     "webpack-stream": "^7.0.0"
   },
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
     "air-datepicker": "^3.5.3",
+    "body-parser": "^1.20.3",
+    "chart.js": "^4.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "ml-matrix": "^6.12.0",
-    "ml-regression": "github:mljs/regression"
+    "ml-regression": "github:mljs/regression",
+    "mongoose": "^8.9.5",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.0"
   }
 }

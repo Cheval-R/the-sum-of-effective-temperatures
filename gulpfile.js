@@ -57,12 +57,13 @@ const path = {
     scss: 'src/scss/**/*.scss',
     //! Все js файлы через массив
     js: [
-
+      './src/js/main.js',
       './src/js/map.js',
       './src/js/datepicker.js',
       './src/js/weather.js',
       './src/js/validate.js',
       './src/js/forecast.js',
+      './src/js/graph.js',
     ],
     img: 'src/img/**/*.*',
     svg: 'src/svg/**/*.svg',

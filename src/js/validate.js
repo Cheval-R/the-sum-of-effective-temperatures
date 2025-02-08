@@ -11,6 +11,10 @@ const clientName = document.getElementById('client-name');
 const hybrid = document.getElementById('client-hybrid');
 const phone = document.getElementById('phone');
 
+const method = document.getElementById('method');
+const byYear = document.getElementById('by-year');
+
+
 export function ValidateForm(event) {
   if (!ValidateText(farmName, 'Введите название фирмы')) {
     return false
@@ -37,8 +41,10 @@ export function ValidateForm(event) {
   if (!ValidateDates(startDate)) {
     return false
   }
-  if (!ValidateDates(endDate)) {
-    return false
+  if (!byYear.checked) {
+    if (!ValidateDates(endDate)) {
+      return false
+    }
   }
 
   if (!ValidateBaseTemp(baseTemp)) {
@@ -105,12 +111,10 @@ function ValidateBaseTemp(input) {
 
 function ValidateText(input, message) {
   if (input.validity.valueMissing) {
-    console.log('ValidateText value')
     ShowError(input, message);
     return false
   }
   if (input.validity.typeMismatch) {
-    console.log('ValidateText type')
     ShowError(input, message);
     return false
   }

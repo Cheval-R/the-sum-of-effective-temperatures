@@ -1,17 +1,14 @@
-import { SEPARATOR } from './main.js';
-import { baseTemp } from './main.js';
+import { SEPARATOR, baseTemp } from './main.js';
+import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate } from './weather.js';
+import { PrintGraph } from './graph.js';
 
-import { DateParse } from './weather.js';
-import { GetWeather } from './weather.js';
-import { CalculateSumEffectiveTemp } from './weather.js';
-
-const minDate = new Date('2021-03-21');
+const
+  currentYear = new Date().getFullYear(),
+  minDate = new Date('2021-03-21');
 
 
 export async function ForecastSumEffectiveTemp() {
-  let sumEffectiveTemp = 0;
   const startDate = DateParse(document.getElementById('start-date').value, SEPARATOR);
-
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -22,17 +19,26 @@ export async function ForecastSumEffectiveTemp() {
   });
 
   try {
-    const currentData = await GetWeather(startDate, endDate);
-    if (!currentData) {
+    const weatherData = await GetWeather(startDate, endDate);
+    if (!weatherData) {
       throw new Error('Failed to get weather data');
     }
 
-    const datesArray = currentData.hourly.time;
-    const temperaturesArray = currentData.hourly.temperature_2m;
+    const
+      datesArray = weatherData.time,
+      temperaturesArray = weatherData.temp;
+    let [sumEffectiveTemp, currentAverageData] =
+      CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp);
 
-    sumEffectiveTemp = CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp)
+    const lastCountDate = ParseToRusDate(currentAverageData.date.at(-1));
+    console.log(currentAverageData.date.at(-1))
+    document.getElementById('output').innerHTML =
+      `
+      <p>Со дня сева ${ParseToRusDate(startDate)} на сегодняшний день ${currentAverageData.date.at(-1)} накопилось ${sumEffectiveTemp}°C эффективных температур.</p>
+      `
+
     // Прогноз
-    if (sumEffectiveTemp < 900) {
+    if (sumEffectiveTemp < 950) {
       const nextDate = new Date(endDate);
       nextDate.setDate((nextDate.getDate() + 1));
 
@@ -43,11 +49,33 @@ export async function ForecastSumEffectiveTemp() {
       const forecastEndDate = '-12-31';
 
       // Делаем запросы на погоду
-
       const historicWeatherData = await GetHistoricWeather(nextDate.getFullYear(), forecastStartDate, forecastEndDate);
+      const predictedData = {
+        date: historicWeatherData.date,
+      };
+      predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
 
-      console.log(historicWeatherData);
+      const [sumEffectiveTemp, predictedAverageData] =
+        CalculateSumEffectiveTemp(predictedData.date, predictedData.temp, baseTemp, 950, true);
+      console.log(predictedAverageData.date)
 
+
+      const totalDateArray = currentAverageData.date.concat(predictedAverageData.date);
+
+      const totalWeatherData = {
+        date: currentAverageData.date.concat(predictedAverageData.date),
+        temp: currentAverageData.temp.concat(predictedAverageData.temp),
+      }
+      PrintGraph(totalWeatherData);
+
+      let currentDate = new Date(totalDateArray.at(-1));
+      currentDate.setFullYear(currentYear)
+      currentDate = currentDate.toLocaleDateString('ru-RU')
+
+      document.getElementById('output').innerHTML +=
+        `
+        <p>Предполагаемая дата накопления 950°C ${currentDate}.</p>
+        `;
 
     }
   }
@@ -58,99 +86,106 @@ export async function ForecastSumEffectiveTemp() {
 
 
 async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDate) {
-  const
-    startYearLeapFlag = currentYear % 4 === 0 ? true : false,
-    minYear = minDate.getFullYear(),
-    historicWeatherData = {};
+  const startYearLeapFlag = (currentYear % 4 === 0 && currentYear % 100 !== 0) || currentYear % 400 === 0;
+  const minYear = minDate.getFullYear();
+  const historicWeatherData = {};
+  let isDateWritten = false;
 
-  let
-    isDateWritten = false,
-    weatherData;
-
-  while (minYear <= --currentYear) {
-    const
-      startDate = currentYear + forecastStartDate,
-      endDate = currentYear + forecastEndDate,
-      currentYearLeapFlag = currentYear % 4 === 0 ? true : false;
-
-    try {
-      weatherData = await GetWeather(startDate, endDate);
-      if (!weatherData) {
-        throw new Error('Failed to get weather data');
-      }
-
-      // Если год високосный
-      if (currentYearLeapFlag) {
-        weatherData.hourly.temperature_2m.length = weatherData.hourly.temperature_2m.length - 24; // удаляем последний день
-
-        if (startYearLeapFlag && !isDateWritten) {
-          weatherData.hourly.time.length = weatherData.hourly.time.length - 24; // удаляем последний день
-          historicWeatherData.date = weatherData.hourly.time;
-          isDateWritten = true;
-        }
-      }
-      else if (!startYearLeapFlag && !isDateWritten) {
-        historicWeatherData.date = weatherData.hourly.time;
-        isDateWritten = true
-      }
-
-      historicWeatherData[`weatherData${currentYear}`] = weatherData.hourly.temperature_2m;
-
-    }
-    catch (error) {
-      console.error('Error:', error);
-    }
+  const years = [];
+  while (currentYear > minYear) {
+    currentYear--;
+    years.push(currentYear);
   }
-  console.log(historicWeatherData)
-  const predictedTemperatures = await ForecastNextYearWithRegression(historicWeatherData);
 
-  console.log('Прогнозируемые температуры на следующий год:', predictedTemperatures);
-  return historicWeatherData
+  // 🔥 Ограничиваем количество параллельных запросов (batch по 5)
+  const batchSize = 5;
+  const weatherDataMap = new Map();
+
+  for (let i = 0; i < years.length; i += batchSize) {
+    const batchYears = years.slice(i, i + batchSize);
+    const batchPromises = batchYears.map(year => {
+      const startDate = year + forecastStartDate;
+      const endDate = year + forecastEndDate;
+      return GetWeather(startDate, endDate).then(data => ({ year, data })).catch(() => null);
+    });
+
+    const results = await Promise.all(batchPromises);
+
+    results.forEach(result => {
+      if (result && result.data) {
+        weatherDataMap.set(result.year, result.data);
+      }
+    });
+  }
+
+  for (const [year, weatherData] of weatherDataMap) {
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+
+    if (isLeapYear) {
+      weatherData.temp.splice(-24); // Мутируем массив вместо slice()
+
+      if (startYearLeapFlag && !isDateWritten) {
+        weatherData.time.splice(-24);
+        historicWeatherData.date = weatherData.time;
+        isDateWritten = true;
+      }
+    } else if (!startYearLeapFlag && !isDateWritten) {
+      historicWeatherData.date = weatherData.time;
+      isDateWritten = true;
+    }
+
+    historicWeatherData[`weatherData${year}`] = weatherData.temp;
+  }
+
+  return historicWeatherData;
 }
 
+
 async function ForecastNextYearWithRegression(historicWeatherData) {
-  const years = Object.keys(historicWeatherData).filter(key => key.startsWith("weatherData"));
+  const years = Object.keys(historicWeatherData)
+    .filter(key => key.startsWith("weatherData"))
+    .map(key => parseInt(key.replace("weatherData", ""), 10));
 
   if (years.length < 2) {
     throw new Error("Недостаточно данных для прогноза. Требуется минимум 2 года.");
   }
 
   const numDays = historicWeatherData.date.length;
-  const predictedTemperatures = new Array(numDays).fill(0);
+  const predictedTemperatures = new Array(numDays);
+  const maxYear = Math.max(...years);
+  const nextYear = maxYear + 1;
+
+  // Предварительно создаем массив данных по дням
+  const weatherMatrix = years.map(year => historicWeatherData[`weatherData${year}`]);
 
   for (let day = 0; day < numDays; day++) {
-    const x = []; // Годы
-    const y = []; // Температуры
-
-    years.forEach(yearKey => {
-      const year = parseInt(yearKey.replace("weatherData", ""));
-      x.push(year);
-      y.push(historicWeatherData[yearKey][day]);
-    });
-
-    // Вычисляем коэффициенты линейной регрессии
-    const { slope, intercept } = linearRegression(x, y);
-
-    // Делаем прогноз на следующий год
-    const nextYear = Math.max(...x) + 1;
-    predictedTemperatures[day] = (slope * nextYear + intercept).toFixed(2);
+    const y = weatherMatrix.map(row => row[day]); // Температуры по дням
+    const { slope, intercept } = LinearRegression(years, y);
+    predictedTemperatures[day] = Math.round(slope * nextYear + intercept);
   }
 
   return predictedTemperatures;
 }
 
-// Функция для вычисления коэффициентов линейной регрессии (метод наименьших квадратов)
-function linearRegression(x, y) {
+// Оптимизированная линейная регрессия
+function LinearRegression(x, y) {
   const n = x.length;
-  const sumX = x.reduce((acc, val) => acc + val, 0);
-  const sumY = y.reduce((acc, val) => acc + val, 0);
-  const sumXY = x.reduce((acc, val, i) => acc + val * y[i], 0);
-  const sumX2 = x.reduce((acc, val) => acc + val * val, 0);
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  for (let i = 0; i < n; i++) {
+    sumX += x[i];
+    sumY += y[i];
+    sumXY += x[i] * y[i];
+    sumX2 += x[i] * x[i];
+  }
+
+  const denominator = n * sumX2 - sumX * sumX;
+  if (denominator === 0) {
+    throw new Error("Ошибка в вычислениях линейной регрессии.");
+  }
+
+  const slope = (n * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / n;
 
   return { slope, intercept };
 }
-
-

@@ -15,43 +15,50 @@
         <div class="weather__wrapper">
           <h1 class="weather__title">Прогнозирование сроков уборки кукурузы на силос</h1>
           <div class="weather__input">
-            <input type="checkbox" name="method" id="method">
+            <!-- <label class="method" for="method">
+              <span class="method__label">Прогноз благоприятного периода уборки кукурузы на силос</span>
+              <input class="method__input" type="checkbox" name="method" id="method">
+            </label> -->
+            <label class="method" for="by-year">
+              <span class="method__label">Расчёт на год</span>
+              <input class="method__input" type="checkbox" name="year" id="by-year">
+            </label>
             <form class="weather__form" id="location-form" novalidate>
               <fieldset class="client-data">
                 <label class="client-data__label client-data__farm" for="farm-name">
                   <span>Название агрофирмы</span>
-                  <input name="farm-name" id="farm-name" type="text" required>
+                  <input name="farm-name" id="farm-name" type="text" required value="asd">
                 </label>
                 <label class="client-data__label client-data__name" for="client-name">
                   <span>Ваше имя</span>
-                  <input name="client-name" id="client-name" type="text" required>
+                  <input name="client-name" id="client-name" type="text" required value="asd">
                 </label>
                 <label class="client-data__label client-data__phone" for="phone">
                   <span>Телефон</span>
-                  <input type="tel" name="phone" id="phone" pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" placeholder="+7 999 999 99 99" required>
+                  <input type="tel" name="phone" id="phone" pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" placeholder="+7 999 999 99 99" required value="+79999999999">
                 </label>
                 <label class="client-data__label" for="client-hybrid">
                   <span>Гибрид</span>
-                  <input name="client-hybrid" id="client-hybrid" type="text" required>
+                  <input name="client-hybrid" id="client-hybrid" type="text" required value="asd">
                 </label>
               </fieldset>
               <fieldset class="coordinates">
                 <legend>Расположение полей</legend>
                 <label class="coordinates__wrapper" for="latitude">
                   <span>Широта:</span>
-                  <input type="number" id="latitude" name="latitude" value="55.786949" placeholder="55.786949" step="any" min="-90.000000" max="90.000000" maxlength="10" required>
+                  <input type="number" id="latitude" name="latitude" value="55.786949" placeholder="55.786949" step="any" min="-90.000000" max="90.000000" required>
                 </label>
                 <label class="coordinates__wrapper" for="longitude">
                   <span>Долгота:</span>
-                  <input type="number" id="longitude" name="longitude" value="49.121358" placeholder="49.121358" step="any" min="-180.000000" max="180.000000" maxlength="11" required>
+                  <input type="number" id="longitude" name="longitude" value="49.121358" placeholder="49.121358" step="any" min="-180.000000" max="180.000000" required>
                 </label>
               </fieldset>
               <fieldset class="date">
                 <label class="date__wrapper" for="start-date">
                   <span>Дата сева:</span>
-                  <input " class=" datepicker" id="start-date" name="start-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
+                  <input class=" datepicker" id="start-date" name="start-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
                 </label>
-                <label class="date__wrapper" for="end-date">
+                <label class="date__wrapper" for="end-date" id="end-date-label">
                   <span>Конечная дата:</span>
                   <input class="datepicker" id="end-date" name="end-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
                 </label>
@@ -60,13 +67,16 @@
                 <span>Базовая температура (°C):</span>
                 <input type="number" id="base-temp" name="base-temp" value="10" max="20" min="0" placeholder="5" required>
               </label>
-              <div class="map" id="map" height="300" width="600"></div>
+              <div class="map" id="map"></div>
               <button class="calculate" type="submit">Рассчитать</button>
             </form>
           </div>
           <div class="output" id="output">
 
           </div>
+          <canvas id="graph">
+
+          </canvas>
         </div>
       </div>
     </section>

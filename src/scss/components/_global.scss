@@ -110,20 +110,20 @@ iframe {
 	box-sizing: content-box;
 	max-width: 1250px;
 	margin: 0 auto;
-	padding: 0 23px;
+	padding: 50px;
 
-	// @media (max-width: 1200px) {
-	// 	// padding: 0 42px;
-	// 	max-width: 940px;
-	// }
+	/* 	@media (max-width: 1200px) {
+	padding: 0 42px;
+		max-width: 940px;
+	}
 
-	// @media (max-width: 900px) {
-	// 	max-width: clamp(600px, 86vw, 800px);
-	// }
+	@media (max-width: 900px) {
+		max-width: clamp(600px, 86vw, 800px);
+	}
 
-	// @media (max-width: 700px) {
-	// 	max-width: clamp(270px, 88vw, 600px);
-	// }
+	@media (max-width: 700px) {
+		max-width: clamp(270px, 88vw, 600px);
+	} */
 }
 
 hr {
