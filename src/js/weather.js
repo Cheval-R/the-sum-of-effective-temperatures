@@ -1,31 +1,16 @@
 import { SEPARATOR, baseTemp } from './main.js';
-import { ValidateForm } from './validate.js';
 import { ForecastSumEffectiveTemp } from './forecast.js'
 import { PrintGraph } from './graph.js';
 
 
-const method = document.getElementById('method');
 const byYear = document.getElementById('by-year');
 
 const latitude = document.getElementById('latitude');
 const longitude = document.getElementById('longitude');
 
-
-
-document
-  .getElementById('location-form')
-  .addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    if (ValidateForm(event)) {
-      GetSumEffectiveTemp();
-    }
-  });
-
 export async function GetWeather(startDate, endDate) {
   // API URL
   const url = `https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${latitude.value}&longitude=${longitude.value}&start_date=${startDate}&end_date=${endDate}&hourly=temperature_2m,relative_humidity_2m,precipitation&timezone=Europe%2FMoscow`;
-  // const url = `https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${latitude.value}&longitude=${longitude.value}&start_date=${startDate}&end_date=${endDate}&hourly=temperature_2m&timezone=Europe/Moscow`;
 
 
   try {
@@ -56,7 +41,7 @@ export async function GetWeather(startDate, endDate) {
   return null;
 }
 
-async function GetSumEffectiveTemp() {
+export async function GetSumEffectiveTemp() {
   const startDate = document.getElementById('start-date').value;
   const apiStartDate = DateParse(startDate, SEPARATOR);
   let endDate, apiEndDate;
@@ -90,15 +75,14 @@ async function GetSumEffectiveTemp() {
       CalculateSumEffectiveTemp(
         weatherData.time,
         weatherData.temp,
-        baseTemp);
+        baseTemp, 0);
 
     const lastCountDate = totalAverageData.date.at(-1),
       calculationDurationDays = totalAverageData.date.length;
 
-    PrintResult(startDate, lastCountDate, calculationDurationDays, sumEffectiveTemp);
-
     PrintGraph(totalAverageData);
-
+    PrintResult(startDate, lastCountDate, calculationDurationDays, sumEffectiveTemp);
+    OptimalHarvestingTiming(totalAverageData);
   } catch (error) {
     console.error('Error:', error);
     document.getElementById('temperature-sum').textContent =
@@ -108,11 +92,40 @@ async function GetSumEffectiveTemp() {
 }
 
 // ! Вспомогательные
+export function OptimalHarvestingTiming(data) {
+  const dataset = data.temp;
+  let
+    xMinIndex = null,
+    xMaxIndex = null;
 
-export function CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp, stopTemp = Infinity, forecastFlag = false) {
+  dataset.forEach((value, index) => {
+    if (value >= 850 && value <= 950) {
+      if (xMinIndex === null) xMinIndex = index;
+      xMaxIndex = index;
+    }
+  });
+
+  if (xMinIndex !== null && xMaxIndex !== null) {
+    let
+      startDate = data.date[xMinIndex],
+      endDate = data.date[xMaxIndex];
+    document.getElementById('output').style.display = 'block'
+    document.getElementById('output__optimal').innerHTML =
+      `
+      Оптимальный срок уборки кукурузы на силос с <u>${startDate}</u> до <u>${endDate}</u>
+      `;
+  }
+  else {
+    document.getElementById('output__optimal').innerHTML =
+      `
+      Оптимальные сроки уборки кукурузы на силос <b>не определены</b>
+      `;
+  }
+}
+
+export function CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp, sumEffectiveTemp = 0, stopTemp = Infinity, forecastFlag = false) {
   const date = [], temp = [];
 
-  let sumEffectiveTemp = 0;
 
   for (let index = 0; index < datesArray.length && sumEffectiveTemp <= stopTemp; index++) {
     const { nextIndex, averageTemp } =
@@ -149,10 +162,10 @@ export function GetAverageTempByDay(index, datesArray, temperaturesArray) {
 
 // Вывод результата
 function PrintResult(startDate, endDate, diffDays, effectiveSum) {
-  document.getElementById('output').innerHTML =
+  document.getElementById('output').style.display = 'block'
+  document.getElementById('output__sum').innerHTML =
     `
-    <h2 class="output__title">Сумма эффективных температур:</h2>
-    <p> Начиная с ${startDate} до ${endDate} за ${diffDays} дней накопилось ${effectiveSum.toFixed(0)}°C эффективных температур. </p>
+    Начиная с <u>${startDate}</u> до <u>${endDate}</u> за ${diffDays} дней накопилось ${effectiveSum.toFixed(0)}°C эффективных температур.
     `;
 }
 
@@ -165,18 +178,3 @@ export function DateParse(date, separator) {
 export function ParseToRusDate(date) {
   return new Date(date).toLocaleDateString('ru-RU')
 }
-
-/* function CalculateDayDifference(startDay, endDay) {
-  const startDate = new Date(DateParse(startDay, '.'));
-  const endDate = new Date(DateParse(endDay, '.'));
-
-  // Вычисляем разницу в миллисекундах и преобразуем в дни
-  const timeDifference = endDate - startDate;
-  const dayDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24)) + 1;
-
-  return dayDifference;
-} */
-
-
-
-

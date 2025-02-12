@@ -1,6 +1,8 @@
 // Карта
 InitMap();
-
+export let
+  marker,
+  map;
 // Инициализация маркера
 const markerElement = document.createElement('div');
 markerElement.className = 'marker-class';
@@ -12,7 +14,7 @@ async function InitMap() {
   const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = ymaps3;
 
   //  * Инициализация карты
-  const map = new YMap(
+  map = new YMap(
     document.getElementById('map'),
     {
       location: {
@@ -37,7 +39,7 @@ async function InitMap() {
     latitude.value = coordinates[1].toFixed(6);
   }
 
-  const marker = new YMapMarker(
+  marker = new YMapMarker(
     {
       coordinates: [49.121358, 55.786949],
       draggable: true,

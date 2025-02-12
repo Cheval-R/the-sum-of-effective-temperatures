@@ -1,8 +1,8 @@
 import AirDatepicker from 'air-datepicker';
 import { SEPARATOR } from './main.js';
-import e from 'cors';
 
-const method = document.getElementById('method');
+const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
+
 const byYear = document.getElementById('by-year');
 
 const endDateLabel = document.getElementById('end-date-label')
@@ -12,10 +12,16 @@ byYear.addEventListener('change', (event) => {
   if (event.target.checked) {
     endDateLabel.style.display = 'none';
     endDateInput.value = '';
+    startDatePicker.update({
+      maxDate: new Date('2025-12-31')
+    })
   }
   else {
     endDateLabel.style.display = 'flex';
     endDateInput.value = '';
+    startDatePicker.update({
+      maxDate: yesterday,
+    })
   }
 })
 /* method.addEventListener('change', (event) => {
@@ -46,7 +52,7 @@ startDatePicker = new AirDatepicker('#start-date',
     // selectedDates: new Date('2024-01-01'),
     dateFormat: `dd${SEPARATOR}MM${SEPARATOR}yyyy`,
     minDate: new Date('2021-03-23'),
-    // maxDate: new Date(),
+    maxDate: yesterday,
     onSelect({ date }) {
       endDatePicker.update({
         minDate: date,
@@ -61,7 +67,7 @@ endDatePicker = new AirDatepicker('#end-date',
     // inline: true,
     dateFormat: `dd${SEPARATOR}MM${SEPARATOR}yyyy`,
     minDate: new Date('2021-03-23'),
-    // maxDate: new Date(),
+    maxDate: yesterday,
     onSelect({ date }) {
       startDatePicker.update({
         maxDate: date,

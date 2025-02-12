@@ -59,11 +59,11 @@ function CreateBoxPlugin() {
         // Добавляем подпись внутри выделенной области
         ctx.save();
         ctx.fillStyle = 'black';
-        ctx.font = '22px Bold Arial';
+        ctx.font = '22px Epilogue, "Proxima Nova", sans-serif';
         ctx.textAlign = 'center';
         ctx.translate((xMin + xMax) / 2, (yMin + yMax) / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText('Диапазон 850-950', 0, 0);
+        ctx.fillText('Оптимальные сроки уборки', 0, 0);
         ctx.restore();
       }
     }
@@ -92,7 +92,7 @@ function CreateChartConfig(data) {
         legend: {
           labels: {
             font: {
-              size: 16,
+              size: 20,
               weight: 600,
             }
           }

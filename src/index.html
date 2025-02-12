@@ -1,46 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Effective Temperature Sum</title>
+  <link rel="shortcut icon" type="image/png" href="./img/favicon.png" />
+  <title>Расчёт суммы эффективных температур</title>
   <link rel="stylesheet" href="./css/style.min.css">
 </head>
 
 <body>
+  <header class="header">
+    <div class="container">
+      <div class="header__wrapper">
+        <div class="logo">
+          <a class="logo__link" href="https://tatagrohimservis.ru/">
+            <img class="logo__image" src="./img/logo-tahs.png" alt="Логотип">
+          </a>
+        </div>
+        <nav class="nav">
+          <ul class="nav__list">
+            <li class="nav__item">
+              <a class="nav__link" href="https://агросканер.рф">Калькулятор удобрений</a>
+            </li>
+            <li class="nav__item">
+              <a class="nav__link" href="https://агросканер.рф/temperature.html">Расчёт срока уборки силоса</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
   <main>
     <section class="weather">
       <div class="container">
         <div class="weather__wrapper">
+          <button id="demo" class="return__link">Демо</button>
           <h1 class="weather__title">Прогнозирование сроков уборки кукурузы на силос</h1>
           <div class="weather__input">
-            <!-- <label class="method" for="method">
-              <span class="method__label">Прогноз благоприятного периода уборки кукурузы на силос</span>
-              <input class="method__input" type="checkbox" name="method" id="method">
-            </label> -->
-            <label class="method" for="by-year">
-              <span class="method__label">Расчёт на год</span>
-              <input class="method__input" type="checkbox" name="year" id="by-year">
-            </label>
-            <form class="weather__form" id="location-form" novalidate>
+            <form class="weather__form" id="location-form" novalidate autocomplete="off">
               <fieldset class="client-data">
-                <label class="client-data__label client-data__farm" for="farm-name">
-                  <span>Название агрофирмы</span>
-                  <input name="farm-name" id="farm-name" type="text" required value="asd">
-                </label>
-                <label class="client-data__label client-data__name" for="client-name">
-                  <span>Ваше имя</span>
-                  <input name="client-name" id="client-name" type="text" required value="asd">
-                </label>
-                <label class="client-data__label client-data__phone" for="phone">
-                  <span>Телефон</span>
-                  <input type="tel" name="phone" id="phone" pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" placeholder="+7 999 999 99 99" required value="+79999999999">
-                </label>
-                <label class="client-data__label" for="client-hybrid">
-                  <span>Гибрид</span>
-                  <input name="client-hybrid" id="client-hybrid" type="text" required value="asd">
-                </label>
+                <legend>Данные клиента</legend>
+                <div>
+                  <label class="client-data__label client-data__farm" for="farm-name">
+                    <span>Название агрофирмы</span>
+                    <input name="farm-name" id="farm-name" type="text" required>
+                  </label>
+                  <label class="client-data__label client-data__name" for="client-name">
+                    <span>Ваше имя</span>
+                    <input name="client-name" id="client-name" type="text" required>
+                  </label>
+                </div>
+                <div>
+                  <label class="client-data__label client-data__phone" for="phone">
+                    <span>Телефон</span>
+                    <input type="tel" name="phone" id="phone" required placeholder="+7 (***) ***-**-**">
+                    <!-- pattern="^\+7\s?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}$" placeholder="+7 999 999 99 99"  -->
+                  </label>
+                  <label class="client-data__label" for="client-hybrid">
+                    <span>Гибрид</span>
+                    <input name="client-hybrid" id="client-hybrid" type="text" required>
+                  </label>
+                </div>
               </fieldset>
               <fieldset class="coordinates">
                 <legend>Расположение полей</legend>
@@ -54,29 +75,53 @@
                 </label>
               </fieldset>
               <fieldset class="date">
+                <legend>Сроки расчёта</legend>
                 <label class="date__wrapper" for="start-date">
                   <span>Дата сева:</span>
-                  <input class=" datepicker" id="start-date" name="start-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
+                  <input class=" datepicker" id="start-date" name="start-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off" readonly>
                 </label>
                 <label class="date__wrapper" for="end-date" id="end-date-label">
                   <span>Конечная дата:</span>
-                  <input class="datepicker" id="end-date" name="end-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off">
+                  <input class="datepicker" id="end-date" name="end-date" required placeholder="дд.мм.гггг" pattern="^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$" autocomplete="off" readonly>
                 </label>
               </fieldset>
-              <label class="base-temp" for="base-temp" title="Температура при которой начинается вегетация гибрида">
-                <span>Базовая температура (°C):</span>
-                <input type="number" id="base-temp" name="base-temp" value="10" max="20" min="0" placeholder="5" required>
-              </label>
+              <fieldset class="additional">
+                <legend>Дополнительные опции</legend>
+                <label class="base-temp" for="base-temp" title="Минимальная температура, при которой начинается вегетация">
+                  <span>Базовая температура (°C):</span>
+                  <input type="number" id="base-temp" name="base-temp" value="10" max="20" min="0" placeholder="5" required>
+                </label>
+                <label class="method" for="by-year" title="Автоматический расчет до конца года без указания конечной даты. Будут определены благоприятные сроки уборки на силос.">
+                  <span class="method__label">Годовой авторасчёт</span>
+                  <input class="method__input" type="checkbox" name="year" id="by-year">
+                </label>
+              </fieldset>
               <div class="map" id="map"></div>
               <button class="calculate" type="submit">Рассчитать</button>
             </form>
           </div>
           <div class="output" id="output">
-
+            <h2 class="output__title">Сумма эффективных температур:</h2>
+            <p class="output__sum" id="output__sum"></p>
+            <p class="output__optimal" id="output__optimal"></p>
           </div>
           <canvas id="graph">
 
           </canvas>
+          <div class="videos">
+            <figure>
+              <img src="./video/gif2.gif" alt="">
+              <figcaption>Определение точек отбора образцов по NDVI</figcaption>
+            </figure>
+            <figure>
+              <img src="./video/gif3.gif" alt="">
+              <figcaption>Отбор и измельчение образца</figcaption>
+            </figure>
+            <figure>
+              <img src="./video/gif1.gif" alt="">
+              <figcaption>Проведение анализа на содержание сухого вещества и других показателей</figcaption>
+            </figure>
+          </div>
         </div>
       </div>
     </section>

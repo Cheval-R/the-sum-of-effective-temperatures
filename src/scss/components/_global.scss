@@ -29,7 +29,7 @@ body {
 	text-rendering: optimizeLegibility;
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 	-webkit-tap-highlight-color: transparent;
-	color: var.$text-dark-grey;
+	color: #25252d;
 	background-color: #fdf0e9;
 	@include var.text();
 
@@ -110,7 +110,7 @@ iframe {
 	box-sizing: content-box;
 	max-width: 1250px;
 	margin: 0 auto;
-	padding: 50px;
+	padding: 15px;
 
 	/* 	@media (max-width: 1200px) {
 	padding: 0 42px;
@@ -124,6 +124,9 @@ iframe {
 	@media (max-width: 700px) {
 		max-width: clamp(270px, 88vw, 600px);
 	} */
+	@media (max-width: 600px) {
+		padding: 20px;
+	}
 }
 
 hr {

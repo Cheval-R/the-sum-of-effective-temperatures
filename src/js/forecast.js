@@ -1,5 +1,5 @@
 import { SEPARATOR, baseTemp } from './main.js';
-import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate } from './weather.js';
+import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate, OptimalHarvestingTiming } from './weather.js';
 import { PrintGraph } from './graph.js';
 
 const
@@ -8,80 +8,87 @@ const
 
 
 export async function ForecastSumEffectiveTemp() {
-  const startDate = DateParse(document.getElementById('start-date').value, SEPARATOR);
-  const yesterday = new Date();
+  const
+    startDate = DateParse(document.getElementById('start-date').value, SEPARATOR),
+    yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-
-  const endDate = yesterday.toLocaleDateString('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-
+  let
+    sumEffectiveTemp = 0,
+    averageData = {
+      date: [],
+      temp: [],
+    };
   try {
-    const weatherData = await GetWeather(startDate, endDate);
-    if (!weatherData) {
-      throw new Error('Failed to get weather data');
-    }
+    if (new Date(startDate).getTime() < new Date().getTime()) {
+      const endDate = yesterday.toLocaleDateString('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
 
-    const
-      datesArray = weatherData.time,
-      temperaturesArray = weatherData.temp;
-    let [sumEffectiveTemp, currentAverageData] =
-      CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp);
-
-    const lastCountDate = ParseToRusDate(currentAverageData.date.at(-1));
-    console.log(currentAverageData.date.at(-1))
-    document.getElementById('output').innerHTML =
-      `
-      <p>Со дня сева ${ParseToRusDate(startDate)} на сегодняшний день ${currentAverageData.date.at(-1)} накопилось ${sumEffectiveTemp}°C эффективных температур.</p>
-      `
-
-    // Прогноз
-    if (sumEffectiveTemp < 950) {
-      const nextDate = new Date(endDate);
-      nextDate.setDate((nextDate.getDate() + 1));
-
-      const nextDateMonth = nextDate.toLocaleString('en-CA', { month: '2-digit' }); // Месяц с ведущим нулём
-      const nextDateDay = nextDate.toLocaleString('en-CA', { day: '2-digit' }); // День с ведущим нулём
-
-      const forecastStartDate = `-${nextDateMonth}-${nextDateDay}`;
-      const forecastEndDate = '-12-31';
-
-      // Делаем запросы на погоду
-      const historicWeatherData = await GetHistoricWeather(nextDate.getFullYear(), forecastStartDate, forecastEndDate);
-      const predictedData = {
-        date: historicWeatherData.date,
-      };
-      predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
-
-      const [sumEffectiveTemp, predictedAverageData] =
-        CalculateSumEffectiveTemp(predictedData.date, predictedData.temp, baseTemp, 950, true);
-      console.log(predictedAverageData.date)
-
-
-      const totalDateArray = currentAverageData.date.concat(predictedAverageData.date);
-
-      const totalWeatherData = {
-        date: currentAverageData.date.concat(predictedAverageData.date),
-        temp: currentAverageData.temp.concat(predictedAverageData.temp),
+      const weatherData = await GetWeather(startDate, endDate);
+      if (!weatherData) {
+        throw new Error('Failed to get weather data');
       }
-      PrintGraph(totalWeatherData);
-
-      let currentDate = new Date(totalDateArray.at(-1));
-      currentDate.setFullYear(currentYear)
-      currentDate = currentDate.toLocaleDateString('ru-RU')
-
-      document.getElementById('output').innerHTML +=
+      const
+        datesArray = weatherData.time,
+        temperaturesArray = weatherData.temp;
+      let [temporarySumEffectiveTemp,
+        currentAverageData] =
+        CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp);
+      document.getElementById('output').style.display = 'block'
+      document.getElementById('output__sum').innerHTML =
         `
-        <p>Предполагаемая дата накопления 950°C ${currentDate}.</p>
-        `;
-
+      Со дня сева <u>${ParseToRusDate(startDate)}</u> на сегодняшний день <u>${currentAverageData.date.at(-1)}</u> накопилось <b>${temporarySumEffectiveTemp}°C</u> эффективных температур.
+      `;
+      sumEffectiveTemp = temporarySumEffectiveTemp;
+      if (sumEffectiveTemp < 950) {
+        let predictDate = new Date(endDate);
+        predictDate.setDate((predictDate.getDate() + 1));
+        Predicting(predictDate, currentAverageData, sumEffectiveTemp);
+      }
     }
+    else {
+      document.getElementById('output__sum').innerHTML = '';
+
+      Predicting(new Date(DateParse(document.getElementById('start-date').value, SEPARATOR)), averageData, sumEffectiveTemp);
+    }
+    // Прогноз
   }
   catch (error) {
     console.error('Error:', error);
   }
+}
+
+async function Predicting(nextDate, currentAverageData, sumEffectiveTemp) {
+  const nextDateMonth = nextDate.toLocaleString('en-CA', { month: '2-digit' }); // Месяц с ведущим нулём
+  const nextDateDay = nextDate.toLocaleString('en-CA', { day: '2-digit' }); // День с ведущим нулём
+
+  const forecastStartDate = `-${nextDateMonth}-${nextDateDay}`;
+  const forecastEndDate = '-12-31';
+
+  // Делаем запросы на погоду
+  const historicWeatherData = await GetHistoricWeather(nextDate.getFullYear(), forecastStartDate, forecastEndDate);
+  const predictedData = {
+    date: historicWeatherData.date,
+  };
+  predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
+  const [sum, predictedAverageData] =
+    CalculateSumEffectiveTemp(predictedData.date, predictedData.temp, baseTemp, sumEffectiveTemp, 950, true);
+
+  const totalDateArray = currentAverageData.date.concat(predictedAverageData.date);
+
+  const totalWeatherData = {
+    date: currentAverageData.date.concat(predictedAverageData.date),
+    temp: currentAverageData.temp.concat(predictedAverageData.temp),
+  }
+
+  PrintGraph(totalWeatherData);
+
+  let currentDate = new Date(totalDateArray.at(-1));
+  currentDate.setFullYear(currentYear)
+  currentDate = currentDate.toLocaleDateString('ru-RU')
+  OptimalHarvestingTiming(totalWeatherData)
 }
 
 
