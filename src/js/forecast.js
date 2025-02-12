@@ -19,7 +19,7 @@ export async function ForecastSumEffectiveTemp() {
       temp: [],
     };
   try {
-    if (new Date(startDate).getTime() < new Date().getTime()) {
+    if (new Date(startDate).getDate() < new Date().getDate()) {
       const endDate = yesterday.toLocaleDateString('en-CA', {
         year: 'numeric',
         month: '2-digit',
