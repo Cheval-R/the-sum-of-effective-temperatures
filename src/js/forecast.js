@@ -2,6 +2,12 @@ import { SEPARATOR, baseTemp } from './main.js';
 import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate, OptimalHarvestingTiming } from './weather.js';
 import { PrintGraph } from './graph.js';
 
+Date.prototype.withoutTime = function () {
+  let d = new Date(this);
+  d.setHours(0, 0, 0, 0);
+  return d; // Вернуть объект даты без информации о времени
+};
+
 const
   currentYear = new Date().getFullYear(),
   minDate = new Date('2021-03-21');
@@ -19,13 +25,12 @@ export async function ForecastSumEffectiveTemp() {
       temp: [],
     };
   try {
-    if (new Date(startDate).getDate() < new Date().getDate()) {
+    if (new Date(startDate).withoutTime().getTime() < new Date().withoutTime().getTime()) {
       const endDate = yesterday.toLocaleDateString('en-CA', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
       });
-
       const weatherData = await GetWeather(startDate, endDate);
       if (!weatherData) {
         throw new Error('Failed to get weather data');
