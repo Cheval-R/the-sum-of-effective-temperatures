@@ -2,24 +2,39 @@ import Chart from 'chart.js/auto';
 import { chartObj } from './main.js';
 
 export function PrintGraph(data) {
-  // Удаляем нулевые элементы из temp и синхронизируем date
+  RemoveRepeatingGroups(data, 5)
+  if (chartObj.chart) {
+    chartObj.chart.destroy();
+  }
+  chartObj.chart = new Chart(document.getElementById('graph'), CreateChartConfig(data));
+}
+
+function RemoveRepeatingGroups(data, limit = 10) {
   let initialLength = data.temp.length;
   data.temp = data.temp.filter(item => item !== 0);
   let differenceDays = initialLength - data.temp.length;
   data.date = data.date.slice(differenceDays);
-
-  // Удаляем элементы, равные последнему значению temp, и синхронизируем date
-  let lastValue = data.temp.at(-1);
   initialLength = data.temp.length;
-  data.temp = data.temp.filter(item => item !== lastValue);
+  while (true) {
+    let lastValue = data.temp[data.temp.length - 1];
+    let count = 0;
+    let i = data.temp.length - 1;
+
+    // Подсчет количества повторений последнего элемента
+    while (i >= 0 && data.temp[i] === lastValue) {
+      count++;
+      i--;
+    }
+
+    // Если повторений больше limit, удаляем ВСЕ вхождения этого элемента
+    if (count > limit) {
+      data.temp = data.temp.filter(value => value !== lastValue);
+    } else {
+      break;
+    }
+  }
   differenceDays = initialLength - data.temp.length;
   data.date = data.date.slice(0, data.date.length - differenceDays);
-
-  if (chartObj.chart) {
-    chartObj.chart.destroy();
-  }
-
-  chartObj.chart = new Chart(document.getElementById('graph'), CreateChartConfig(data));
 }
 
 function CreateBoxPlugin() {

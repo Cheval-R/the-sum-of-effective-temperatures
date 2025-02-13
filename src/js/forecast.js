@@ -1,13 +1,11 @@
 import { SEPARATOR, baseTemp } from './main.js';
 import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate, OptimalHarvestingTiming } from './weather.js';
 import { PrintGraph } from './graph.js';
-
 Date.prototype.withoutTime = function () {
   let d = new Date(this);
   d.setHours(0, 0, 0, 0);
   return d; // Вернуть объект даты без информации о времени
 };
-
 const
   currentYear = new Date().getFullYear(),
   minDate = new Date('2021-03-21');
@@ -15,7 +13,7 @@ const
 
 export async function ForecastSumEffectiveTemp() {
   const
-    startDate = DateParse(document.getElementById('start-date').value, SEPARATOR),
+    startDate = DateParse(document.getElementById('start-date').value),
     yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   let
@@ -25,26 +23,24 @@ export async function ForecastSumEffectiveTemp() {
       temp: [],
     };
   try {
-    if (new Date(startDate).withoutTime().getTime() < new Date().withoutTime().getTime()) {
+    if (new Date(startDate).withoutTime().getDate() < new Date().withoutTime().getDate()) {
       const endDate = yesterday.toLocaleDateString('en-CA', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
       });
+
       const weatherData = await GetWeather(startDate, endDate);
       if (!weatherData) {
         throw new Error('Failed to get weather data');
       }
-      const
-        datesArray = weatherData.time,
-        temperaturesArray = weatherData.temp;
       let [temporarySumEffectiveTemp,
         currentAverageData] =
-        CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp);
+        CalculateSumEffectiveTemp(weatherData);
       document.getElementById('output').style.display = 'block'
       document.getElementById('output__sum').innerHTML =
         `
-      Со дня сева <u>${ParseToRusDate(startDate)}</u> на сегодняшний день <u>${currentAverageData.date.at(-1)}</u> накопилось <b>${temporarySumEffectiveTemp}°C</u> эффективных температур.
+        Со дня сева <u>${ParseToRusDate(startDate)}</u> на сегодняшний день <u>${currentAverageData.date.at(-1)}</u> накопилось <b>${temporarySumEffectiveTemp}°C</u> эффективных температур.
       `;
       sumEffectiveTemp = temporarySumEffectiveTemp;
       if (sumEffectiveTemp < 950) {
@@ -56,7 +52,7 @@ export async function ForecastSumEffectiveTemp() {
     else {
       document.getElementById('output__sum').innerHTML = '';
 
-      Predicting(new Date(DateParse(document.getElementById('start-date').value, SEPARATOR)), averageData, sumEffectiveTemp);
+      Predicting(new Date(DateParse(document.getElementById('start-date').value)), averageData, sumEffectiveTemp);
     }
     // Прогноз
   }
@@ -79,14 +75,14 @@ async function Predicting(nextDate, currentAverageData, sumEffectiveTemp) {
   };
   predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
   const [sum, predictedAverageData] =
-    CalculateSumEffectiveTemp(predictedData.date, predictedData.temp, baseTemp, sumEffectiveTemp, 950, true);
+    CalculateSumEffectiveTemp(predictedData, sumEffectiveTemp, 950, true);
 
-  const totalDateArray = currentAverageData.date.concat(predictedAverageData.date);
-
-  const totalWeatherData = {
-    date: currentAverageData.date.concat(predictedAverageData.date),
-    temp: currentAverageData.temp.concat(predictedAverageData.temp),
-  }
+  const
+    totalDateArray = currentAverageData.date.concat(predictedAverageData.date),
+    totalWeatherData = {
+      date: currentAverageData.date.concat(predictedAverageData.date),
+      temp: currentAverageData.temp.concat(predictedAverageData.temp),
+    }
 
   PrintGraph(totalWeatherData);
 
@@ -137,12 +133,12 @@ async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDat
       weatherData.temp.splice(-24); // Мутируем массив вместо slice()
 
       if (startYearLeapFlag && !isDateWritten) {
-        weatherData.time.splice(-24);
-        historicWeatherData.date = weatherData.time;
+        weatherData.date.splice(-24);
+        historicWeatherData.date = weatherData.date;
         isDateWritten = true;
       }
     } else if (!startYearLeapFlag && !isDateWritten) {
-      historicWeatherData.date = weatherData.time;
+      historicWeatherData.date = weatherData.date;
       isDateWritten = true;
     }
 

@@ -1,4 +1,4 @@
-import { SEPARATOR, baseTemp } from './main.js';
+import { baseTemp } from './main.js';
 import { ForecastSumEffectiveTemp } from './forecast.js'
 import { PrintGraph } from './graph.js';
 
@@ -28,7 +28,7 @@ export async function GetWeather(startDate, endDate) {
       throw new Error('Data is missing or corrupted');
     }
     return {
-      time: weatherData.hourly.time,
+      date: weatherData.hourly.time,
       temp: weatherData.hourly.temperature_2m,
     };
   }
@@ -42,46 +42,44 @@ export async function GetWeather(startDate, endDate) {
 }
 
 export async function GetSumEffectiveTemp() {
-  const startDate = document.getElementById('start-date').value;
-  const apiStartDate = DateParse(startDate, SEPARATOR);
-  let endDate, apiEndDate;
+  const
+    inputStartDate = document.getElementById('start-date').value,
+    apiStartDate = DateParse(inputStartDate);
+  let apiEndDate;
+  // Если расчёт на год активирован то нам нужно сгенерировать конечную дату расчёта (31.12.202Х)
   if (byYear.checked) {
-    let selectedYear = new Date(apiStartDate).getFullYear();
-    let currentYear = new Date().getFullYear();
+    let
+      selectedYear = new Date(apiStartDate).getFullYear(),
+      currentYear = new Date().getFullYear();
+    // Если выбранная дата находится в текущем году, то вызываем функцию прогноза
     if (selectedYear === currentYear) {
-      ForecastSumEffectiveTemp();
+      ForecastSumEffectiveTemp(); // Переделать структуру
       return
     } else {
-      endDate = `${selectedYear}-12-31`;
+      // Иначе задаём конечную дату с заданным годом
+      apiEndDate = `${selectedYear}-12-31`;
     }
-    apiEndDate = endDate;
   }
   else {
-    endDate = document.getElementById('end-date').value;
-    apiEndDate = DateParse(endDate, SEPARATOR);
+    // Если расчёт на год не активирован, то берем конечную дату из инпута
+    const inputEndDate = document.getElementById('end-date').value;
+    apiEndDate = DateParse(inputEndDate);
   }
-
   try {
-    const weatherData = await GetWeather(
-      apiStartDate,
-      apiEndDate
-    );
+    const weatherData = await GetWeather(apiStartDate, apiEndDate);
     if (!weatherData) {
       throw new Error('Failed to get weather data');
     }
-
+    console.log('weatherData', weatherData)
     // Расчёт суммы эффективных температур
     let [sumEffectiveTemp, totalAverageData] =
-      CalculateSumEffectiveTemp(
-        weatherData.time,
-        weatherData.temp,
-        baseTemp, 0);
-
+      CalculateSumEffectiveTemp(weatherData, 0);
+    console.log('totalAverageData', totalAverageData)
     const lastCountDate = totalAverageData.date.at(-1),
       calculationDurationDays = totalAverageData.date.length;
 
     PrintGraph(totalAverageData);
-    PrintResult(startDate, lastCountDate, calculationDurationDays, sumEffectiveTemp);
+    PrintResult(inputStartDate, lastCountDate, calculationDurationDays, sumEffectiveTemp);
     OptimalHarvestingTiming(totalAverageData);
   } catch (error) {
     console.error('Error:', error);
@@ -122,14 +120,16 @@ export function OptimalHarvestingTiming(data) {
       `;
   }
 }
-
-export function CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTemp, sumEffectiveTemp = 0, stopTemp = Infinity, forecastFlag = false) {
+// datesArray  temperaturesArray это два массива одного и того же объекта
+// Basetemp - сделать глобальным объектом
+// stopTemp зависит от byyear, checked => 950 else infinity
+export function CalculateSumEffectiveTemp(data, sumEffectiveTemp = 0, stopTemp = Infinity, forecastFlag = false) {
+  console.log(data)
   const date = [], temp = [];
-
-
-  for (let index = 0; index < datesArray.length && sumEffectiveTemp <= stopTemp; index++) {
+  // && sumEffectiveTemp <= stopTemp
+  for (let index = 0; index < data.date.length; index++) {
     const { nextIndex, averageTemp } =
-      GetAverageTempByDay(index, datesArray, temperaturesArray)
+      GetAverageTempByDay(index, data)
     index = nextIndex
 
     if (averageTemp > baseTemp) {
@@ -137,7 +137,7 @@ export function CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTem
     }
     temp.push(sumEffectiveTemp);
 
-    let currentDate = new Date(datesArray[index]);
+    let currentDate = new Date(data.date[index]);
     if (forecastFlag) {
       const currentYear = new Date().getFullYear();
       currentDate.setFullYear(currentYear);
@@ -147,15 +147,15 @@ export function CalculateSumEffectiveTemp(datesArray, temperaturesArray, baseTem
   return [sumEffectiveTemp, { temp, date }];
 }
 
-export function GetAverageTempByDay(index, datesArray, temperaturesArray) {
+export function GetAverageTempByDay(index, data) {
   let sum = 0, hours = 1;
-  const currentDay = datesArray[index].split('T')[0]
-  while (currentDay === datesArray[index + 1]?.split('T')[0]) {
-    sum += temperaturesArray[index];
+  const currentDay = data.date[index].split('T')[0]
+  while (currentDay === data.date[index + 1]?.split('T')[0]) {
+    sum += data.temp[index];
     index++;
     hours++;
   }
-  sum += temperaturesArray[index];
+  sum += data.temp[index];
 
   return { nextIndex: index, averageTemp: (sum / hours).toFixed(0) }
 }
@@ -170,10 +170,11 @@ function PrintResult(startDate, endDate, diffDays, effectiveSum) {
 }
 
 // Изменение формата записи  с ДД.ММ.ГГГГ до ГГГГ-ММ-ДД
-export function DateParse(date, separator) {
-  const dateArray = date.split(separator);
-  return `${dateArray[2]}-${dateArray[1]}-${dateArray[0]}`
+export function DateParse(date) {
+  const [day, month, year] = date.split('.');
+  return `${year}-${month}-${day}`;
 }
+
 
 export function ParseToRusDate(date) {
   return new Date(date).toLocaleDateString('ru-RU')
