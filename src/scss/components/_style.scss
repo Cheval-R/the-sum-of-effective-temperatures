@@ -184,6 +184,10 @@ button:hover {
   flex-direction: column;
 }
 
+#end-date-label {
+  display: none;
+}
+
 .additional {
   grid-area: additional;
   display: flex;
@@ -419,7 +423,7 @@ input[type="number"]::-webkit-outer-spin-button {
   &__input:checked::before {
     background: #007236;
     border: none;
-    left: 21px;
+    left: 25px;
     background: white;
   }
 
@@ -456,5 +460,34 @@ legend {
       aspect-ratio: 1 / 1;
       object-fit: cover;
     }
+  }
+}
+
+/* HTML: <div class="loader"></div> */
+/* HTML: <div class="loader"></div> */
+.loader {
+  display: none;
+  margin: 0 auto 25px;
+  width: fit-content;
+  font-size: 40px;
+  line-height: 1.5;
+  font-family: system-ui, sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #0000;
+  -webkit-text-stroke: 1px #000;
+  background:
+    radial-gradient(1.13em at 50% 1.6em, #007236 99%, #0000 101%) calc(50% - 1.6em) 0/3.2em 100% text,
+    radial-gradient(1.13em at 50% -0.8em, #0000 99%, #007236 101%) 50% 0.8em/3.2em 100% repeat-x text;
+  animation: l9 2s linear infinite;
+}
+.loader:before {
+  content: "Вычисление";
+}
+@keyframes l9 {
+  to {
+    background-position:
+      calc(50% + 1.6em) 0,
+      calc(50% + 3.2em) 0.8em;
   }
 }

@@ -1,107 +1,134 @@
-import JustValidate from 'just-validate';
-import Inputmask from "inputmask/dist/inputmask.es6.js";
-import { GetSumEffectiveTemp } from './weather.js';
+import { CalculateByPeriod } from './weather.js';
+import { CalculateByYear } from './forecast.js';
+import { PrintGraph } from './graph.js';
 
-export const SEPARATOR = '.';
-export const baseTemp = parseFloat(document.getElementById('base-temp').value);
-export const chartObj = { chart: null };
+export const
+  baseTemp = parseFloat(document.getElementById('base-temp').value),
+  chartObj = { chart: null };
 
-// Всё начинается с Валидации
-const byYear = document.getElementById('by-year');
+export const byPeriod = document.getElementById('by-year');
 
+Date.prototype.withoutTime = function () {
+  let d = new Date(this);
+  d.setHours(0, 0, 0, 0);
+  return d; // Вернуть объект даты без информации о времени
+};
 
-const telMask = new Inputmask('+7 (999) 999-99-99', { "placeholder": "+7 (***) ***-**-**" });
-telMask.mask(phone);
+export async function main() {
+  const dateRangeData = GetDate(document.getElementById('start-date').value, document.getElementById('end-date').value);
+  try {
+    if (!byPeriod.checked) {
+      let totalData = await CalculateByYear(dateRangeData);
+      if (!totalData)
+        throw new Error('Не удалось произвести расчёт, попробуйте позже или измените параметры')
+      PrintResult(totalData);
+      document.getElementById('loader').style.display = 'none';
 
-const validate = new JustValidate('#location-form');
-
-validate
-  .addField('#farm-name', [
-    {
-      rule: "required",
-      errorMessage: 'Введите название',
-    },
-    {
-      validator: (value) => {
-        return value !== undefined && value.length > 3;
-      },
-      errorMessage: 'Минимум 4 буквы',
-    },
-  ])
-  .addField('#client-name', [
-    {
-      rule: "required",
-      errorMessage: 'Введите ваше имя',
-    },
-    {
-      validator: (value) => {
-        return value !== undefined && value.length >= 2;
-      },
-      errorMessage: 'Минимум 2 буквы',
-    },
-  ])
-  .addField('#client-hybrid', [
-    {
-      rule: "required",
-      errorMessage: 'Введите гибрид',
-    },
-    {
-      validator: (value) => {
-        return value !== undefined && value.length >= 3;
-      },
-      errorMessage: 'Минимум 3 буквы',
-    },
-  ])
-  .addField('#phone', [
-    {
-      rule: 'required',
-      errorMessage: 'Введите телефон',
-    },
-    {
-      validator(value) {
-        const phoneNumber = phone.inputmask.unmaskedvalue();
-        return !!(Number(phoneNumber) && phoneNumber.length === 10);
-      },
-      errorMessage: 'Некорректный номер',
-    },
-  ])
-  .addField('#start-date', [
-    {
-      rule: 'required',
-      errorMessage: 'Выберите дату'
     }
-  ])
-  .addField('#end-date', [
-    {
-      validator: (value) => {
-        if (byYear.checked) return true; // Если флаг false — пропускаем валидацию
-        return value.trim() !== ''; // Если флаг true — проверяем, заполнено ли поле
-      },
-      errorMessage: 'Выберите дату',
-    },
-  ])
-  .addField('#latitude', [
-    {
-      rule: 'required',
-      errorMessage: 'Введите широту'
-    },
-    {
-      validator: (value) => !isNaN(value) && value >= -90 && value <= 90,
-      errorMessage: 'От -90 до 90'
+    else {
+      let totalData = await CalculateByPeriod(dateRangeData);
+      if (!totalData)
+        throw new Error('Не удалось произвести расчёт, попробуйте позже или измените параметры')
+      PrintResult(totalData)
+      document.getElementById('loader').style.display = 'none';
     }
-  ])
-  .addField('#longitude', [
-    {
-      rule: 'required',
-      errorMessage: 'Введите долготу'
-    },
-    {
-      validator: (value) => !isNaN(value) && value >= -180 && value <= 180,
-      errorMessage: 'От -180 до 180'
+  } catch (error) {
+    console.error('Ошибка:', error);
+    document.getElementById('temperature-sum').textContent =
+      'Ошибка. Не удалось рассчитать эффективную температуру. Попробуйте изменить параметры.';
+    return null;
+  }
+}
+
+// ? Вспомогательные Функции
+
+function GetDate(startDate, endDate) {
+  const data = {
+    startDatePoint: startDate,
+    startDateMinus: DateParseForAPI(startDate),
+    endDatePoint: endDate,
+    endDateMinus: DateParseForAPI(endDate),
+  }
+
+  if (!byPeriod.checked) {
+    const
+      selectedYear = new Date(data.startDateMinus).getFullYear(),
+      currentYear = new Date().getFullYear();
+
+    if (selectedYear === currentYear) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (new Date(data.startDatePoint).withoutTime().getDate() < new Date().withoutTime().getDate()) {
+        data.endDateMinus = yesterday.toLocaleDateString('en-CA', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      }
     }
-  ])
-  .onSuccess(event => {
-    event.preventDefault();
-    // Запуск основной функции программы
-    GetSumEffectiveTemp();
-  })
+    else {
+      data.endDateMinus = `${selectedYear}-12-31`;
+    }
+  }
+  return data;
+}
+
+// Изменение формата записи с ДД.ММ.ГГГГ до ГГГГ-ММ-ДД
+function DateParseForAPI(date) {
+  const [day, month, year] = date.split('.');
+  return `${year}-${month}-${day}`;
+}
+
+// ! Вывод результата
+export function PrintResult(data) {
+  PrintEffectiveTemp(data, OptimalHarvestingTiming(data));
+  PrintGraph(data);
+}
+
+function PrintEffectiveTemp(totalData, optimalHarvestingTiming) {
+  let introWord = 'Начиная с';
+  if (!byPeriod.checked) {
+    introWord = 'Со дня сева'
+  }
+  document.getElementById('output').style.display = 'block'
+  document.getElementById('output__sum').innerHTML =
+    `
+    ${introWord} <u>${totalData.date[0]}</u> до <u>${totalData.date.at(-1)}</u> за ${totalData.date.length} дней накопилось ${totalData.sumEffectiveTemp.toFixed(0)}°C эффективных температур.
+    `;
+
+  if (!optimalHarvestingTiming) {
+    document.getElementById('output__optimal').innerHTML =
+      `
+      Оптимальные сроки уборки кукурузы на силос <b>не определены</b>
+      `;
+  } else {
+    console.log('optimalHarvestingTiming', optimalHarvestingTiming)
+    document.getElementById('output').style.display = 'block'
+    document.getElementById('output__optimal').innerHTML =
+      `
+    Оптимальный срок уборки кукурузы на силос с <u>${optimalHarvestingTiming.optimalStartDate}</u> до <u>${optimalHarvestingTiming.optimalEndDate}</u>
+    `;
+  }
+}
+
+function OptimalHarvestingTiming(data) {
+  const dataset = data.temp;
+  let
+    xMinIndex = null,
+    xMaxIndex = null;
+
+  dataset.forEach((value, index) => {
+    if (value >= 850 && value <= 950) {
+      if (xMinIndex === null) xMinIndex = index;
+      xMaxIndex = index;
+    }
+  });
+
+  if (xMinIndex !== null && xMaxIndex !== null) {
+    return {
+      optimalStartDate: data.date[xMinIndex],
+      optimalEndDate: data.date[xMaxIndex]
+    }
+  }
+  return null
+}

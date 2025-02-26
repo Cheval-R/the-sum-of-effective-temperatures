@@ -1,124 +1,114 @@
-import { SEPARATOR, baseTemp } from './main.js';
-import { DateParse, GetWeather, CalculateSumEffectiveTemp, ParseToRusDate, OptimalHarvestingTiming } from './weather.js';
-import { PrintGraph } from './graph.js';
+import {
+  GetWeather,
+  CalculateSumEffectiveTemp,
+  CalculateByPeriod
+} from './weather.js';
+const MIN_DATE = new Date('2021-03-21');
+
 Date.prototype.withoutTime = function () {
   let d = new Date(this);
   d.setHours(0, 0, 0, 0);
   return d; // Вернуть объект даты без информации о времени
 };
-const
-  currentYear = new Date().getFullYear(),
-  minDate = new Date('2021-03-21');
 
-
-export async function ForecastSumEffectiveTemp() {
-  const
-    startDate = DateParse(document.getElementById('start-date').value),
-    yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  let
-    sumEffectiveTemp = 0,
-    averageData = {
-      date: [],
-      temp: [],
-    };
+export async function CalculateByYear(dateRangeData) {
   try {
-    if (new Date(startDate).withoutTime().getDate() < new Date().withoutTime().getDate()) {
-      const endDate = yesterday.toLocaleDateString('en-CA', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-
-      const weatherData = await GetWeather(startDate, endDate);
+    if (IsPreviousDays(dateRangeData.startDateMinus)) {
+      const weatherData = await CalculateByPeriod(dateRangeData);
       if (!weatherData) {
-        throw new Error('Failed to get weather data');
+        throw new Error('Не удалось получить погодные данные. Попробуйте позже или измените параметры');
       }
-      let [temporarySumEffectiveTemp,
-        currentAverageData] =
-        CalculateSumEffectiveTemp(weatherData);
-      document.getElementById('output').style.display = 'block'
-      document.getElementById('output__sum').innerHTML =
-        `
-        Со дня сева <u>${ParseToRusDate(startDate)}</u> на сегодняшний день <u>${currentAverageData.date.at(-1)}</u> накопилось <b>${temporarySumEffectiveTemp}°C</u> эффективных температур.
-      `;
-      sumEffectiveTemp = temporarySumEffectiveTemp;
-      if (sumEffectiveTemp < 950) {
-        let predictDate = new Date(endDate);
-        predictDate.setDate((predictDate.getDate() + 1));
-        Predicting(predictDate, currentAverageData, sumEffectiveTemp);
+      if (weatherData.sumEffectiveTemp < 850) {
+        const predictedData = await Prediction(weatherData, dateRangeData.endDateMinus)
+        return predictedData;
+      }
+      else {
+        return weatherData
       }
     }
     else {
-      document.getElementById('output__sum').innerHTML = '';
-
-      Predicting(new Date(DateParse(document.getElementById('start-date').value)), averageData, sumEffectiveTemp);
+      const predictedData = await Prediction({ date: [], temp: [], sumEffectiveTemp: 0 }, dateRangeData.startDateMinus);
+      return predictedData
     }
-    // Прогноз
+  } catch (error) {
+    console.error('Error:', error);
+    return null
+  }
+}
+
+async function GetPredictedData(nextDate, weatherData) {
+  const
+    nextDateMonth = nextDate.toLocaleString('en-CA', { month: '2-digit' }),
+    nextDateDay = nextDate.toLocaleString('en-CA', { day: '2-digit' }),
+    forecastStartDate = `-${nextDateMonth}-${nextDateDay}`,
+    forecastEndDate = '-12-31';
+  // Делаем запросы погоды
+  try {
+    const historicWeatherData = await GetHistoricWeather(nextDate.getFullYear(), forecastStartDate, forecastEndDate);
+    if (!historicWeatherData)
+      throw new Error("Не удалось получить данные за прошлые года");
+    const predictedData = {
+      date: historicWeatherData.date,
+    };
+    predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
+
+    const predictedAverageData =
+      CalculateSumEffectiveTemp(predictedData, weatherData.sumEffectiveTemp, true);
+    return {
+      sumEffectiveTemp: predictedAverageData.sumEffectiveTemp,
+      date: weatherData.date.concat(predictedAverageData.date),
+      temp: weatherData.temp.concat(predictedAverageData.temp),
+    }
   }
   catch (error) {
     console.error('Error:', error);
+    return null;
   }
 }
 
-async function Predicting(nextDate, currentAverageData, sumEffectiveTemp) {
-  const nextDateMonth = nextDate.toLocaleString('en-CA', { month: '2-digit' }); // Месяц с ведущим нулём
-  const nextDateDay = nextDate.toLocaleString('en-CA', { day: '2-digit' }); // День с ведущим нулём
-
-  const forecastStartDate = `-${nextDateMonth}-${nextDateDay}`;
-  const forecastEndDate = '-12-31';
-
-  // Делаем запросы на погоду
-  const historicWeatherData = await GetHistoricWeather(nextDate.getFullYear(), forecastStartDate, forecastEndDate);
-  const predictedData = {
-    date: historicWeatherData.date,
-  };
-  predictedData.temp = await ForecastNextYearWithRegression(historicWeatherData);
-  const [sum, predictedAverageData] =
-    CalculateSumEffectiveTemp(predictedData, sumEffectiveTemp, 950, true);
-
+async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDate) {
   const
-    totalDateArray = currentAverageData.date.concat(predictedAverageData.date),
-    totalWeatherData = {
-      date: currentAverageData.date.concat(predictedAverageData.date),
-      temp: currentAverageData.temp.concat(predictedAverageData.temp),
-    }
-
-  PrintGraph(totalWeatherData);
-
-  let currentDate = new Date(totalDateArray.at(-1));
-  currentDate.setFullYear(currentYear)
-  currentDate = currentDate.toLocaleDateString('ru-RU')
-  OptimalHarvestingTiming(totalWeatherData)
+    startYearLeapFlag = IsLeapYear(currentYear),
+    years = GenerateYearsList(currentYear),
+    weatherDataMap = await FetchWeatherData(years, forecastStartDate, forecastEndDate);
+  return ProcessWeatherData(weatherDataMap, startYearLeapFlag);
 }
 
+function IsLeapYear(year) {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
 
-async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDate) {
-  const startYearLeapFlag = (currentYear % 4 === 0 && currentYear % 100 !== 0) || currentYear % 400 === 0;
-  const minYear = minDate.getFullYear();
-  const historicWeatherData = {};
-  let isDateWritten = false;
-
-  const years = [];
+function GenerateYearsList(currentYear) {
+  const
+    minYear = MIN_DATE.getFullYear(),
+    years = [];
   while (currentYear > minYear) {
     currentYear--;
     years.push(currentYear);
   }
+  return years;
+}
 
-  // 🔥 Ограничиваем количество параллельных запросов (batch по 5)
-  const batchSize = 5;
-  const weatherDataMap = new Map();
+async function FetchWeatherData(years, forecastStartDate, forecastEndDate) {
+  const
+    batchSize = 5,
+    weatherDataMap = new Map();
 
   for (let i = 0; i < years.length; i += batchSize) {
     const batchYears = years.slice(i, i + batchSize);
-    const batchPromises = batchYears.map(year => {
-      const startDate = year + forecastStartDate;
-      const endDate = year + forecastEndDate;
-      return GetWeather(startDate, endDate).then(data => ({ year, data })).catch(() => null);
+    const batchPromises = batchYears.map(async year => {
+      try {
+        const data = await GetWeather({
+          startDateMinus: year + forecastStartDate,
+          endDateMinus: year + forecastEndDate
+        });
+        return ({ year, data });
+      } catch {
+        return null;
+      }
     });
 
     const results = await Promise.all(batchPromises);
-
     results.forEach(result => {
       if (result && result.data) {
         weatherDataMap.set(result.year, result.data);
@@ -126,12 +116,18 @@ async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDat
     });
   }
 
+  return weatherDataMap;
+}
+
+function ProcessWeatherData(weatherDataMap, startYearLeapFlag) {
+  const historicWeatherData = {};
+  let isDateWritten = false;
+
   for (const [year, weatherData] of weatherDataMap) {
-    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const isLeap = IsLeapYear(year);
 
-    if (isLeapYear) {
-      weatherData.temp.splice(-24); // Мутируем массив вместо slice()
-
+    if (isLeap) {
+      weatherData.temp.splice(-24);
       if (startYearLeapFlag && !isDateWritten) {
         weatherData.date.splice(-24);
         historicWeatherData.date = weatherData.date;
@@ -147,7 +143,6 @@ async function GetHistoricWeather(currentYear, forecastStartDate, forecastEndDat
 
   return historicWeatherData;
 }
-
 
 async function ForecastNextYearWithRegression(historicWeatherData) {
   const years = Object.keys(historicWeatherData)
@@ -196,4 +191,25 @@ function LinearRegression(x, y) {
   const intercept = (sumY - slope * sumX) / n;
 
   return { slope, intercept };
+}
+
+function IsPreviousDays(date) {
+  const
+    today = new Date().withoutTime().getDate(),
+    chosenDay = new Date(date).withoutTime().getDate();
+
+  if (chosenDay < today)
+    return true;
+
+  return false
+}
+
+async function Prediction(weatherData, predictDate) {
+  const endPredictDate = new Date(predictDate);
+  endPredictDate.setDate((endPredictDate.getDate() + 1));
+  const predictedData = await GetPredictedData(endPredictDate, weatherData);
+  if (!predictedData) {
+    throw new Error("Не удалось получить данные за прошлые года");
+  }
+  return predictedData;
 }

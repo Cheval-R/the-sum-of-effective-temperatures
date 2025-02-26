@@ -91,8 +91,8 @@
                   <span>Базовая температура (°C):</span>
                   <input type="number" id="base-temp" name="base-temp" value="10" max="20" min="0" placeholder="5" required>
                 </label>
-                <label class="method" for="by-year" title="Автоматический расчет до конца года без указания конечной даты. Будут определены благоприятные сроки уборки на силос.">
-                  <span class="method__label">Годовой авторасчёт</span>
+                <label class="method" for="by-year" title="Автоматический расчет суммы эффективных температур на заданный период. По возможности будет определен благоприятный срок уборки кукурузы на силос.">
+                  <span class="method__label">Расчёт за&nbsp;период</span>
                   <input class="method__input" type="checkbox" name="year" id="by-year">
                 </label>
               </fieldset>
@@ -100,6 +100,8 @@
               <button class="calculate" type="submit">Рассчитать</button>
             </form>
           </div>
+          <div class="loader" id="loader"></div>
+
           <div class="output" id="output">
             <h2 class="output__title">Сумма эффективных температур:</h2>
             <p class="output__sum" id="output__sum"></p>

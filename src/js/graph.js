@@ -2,39 +2,39 @@ import Chart from 'chart.js/auto';
 import { chartObj } from './main.js';
 
 export function PrintGraph(data) {
-  RemoveRepeatingGroups(data, 5)
+  const newData = RemoveRepeatingGroups(data, 5);
   if (chartObj.chart) {
     chartObj.chart.destroy();
   }
-  chartObj.chart = new Chart(document.getElementById('graph'), CreateChartConfig(data));
+  chartObj.chart = new Chart(document.getElementById('graph'), CreateChartConfig(newData));
 }
 
 function RemoveRepeatingGroups(data, limit = 10) {
-  let initialLength = data.temp.length;
-  data.temp = data.temp.filter(item => item !== 0);
-  let differenceDays = initialLength - data.temp.length;
-  data.date = data.date.slice(differenceDays);
-  initialLength = data.temp.length;
-  while (true) {
-    let lastValue = data.temp[data.temp.length - 1];
-    let count = 0;
-    let i = data.temp.length - 1;
+  let temp = data.temp.filter(item => item !== 0);
+  let differenceDays = data.temp.length - temp.length;
+  let date = data.date.slice(differenceDays);
 
-    // Подсчет количества повторений последнего элемента
-    while (i >= 0 && data.temp[i] === lastValue) {
+  while (true) {
+    let lastValue = temp[temp.length - 1];
+    let count = 0;
+    let i = temp.length - 1;
+
+    while (i >= 0 && temp[i] === lastValue) {
       count++;
       i--;
     }
 
-    // Если повторений больше limit, удаляем ВСЕ вхождения этого элемента
     if (count > limit) {
-      data.temp = data.temp.filter(value => value !== lastValue);
+      temp = temp.filter(value => value !== lastValue);
     } else {
       break;
     }
   }
-  differenceDays = initialLength - data.temp.length;
-  data.date = data.date.slice(0, data.date.length - differenceDays);
+
+  differenceDays = data.temp.length - temp.length;
+  date = date.slice(0, date.length - differenceDays);
+
+  return { temp, date };
 }
 
 function CreateBoxPlugin() {
@@ -71,14 +71,13 @@ function CreateBoxPlugin() {
         ctx.lineWidth = 2;
         ctx.strokeRect(xMin, yMax, xMax - xMin, yMin - yMax);
 
-        // Добавляем подпись внутри выделенной области
         ctx.save();
         ctx.fillStyle = 'black';
         ctx.font = '22px Epilogue, "Proxima Nova", sans-serif';
         ctx.textAlign = 'center';
         ctx.translate((xMin + xMax) / 2, (yMin + yMax) / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText('Оптимальные сроки уборки', 0, 0);
+        ctx.fillText('Оптимальные сроки уборки', 0, 0);
         ctx.restore();
       }
     }
@@ -117,4 +116,3 @@ function CreateChartConfig(data) {
     plugins: [CreateBoxPlugin()]
   };
 }
-
