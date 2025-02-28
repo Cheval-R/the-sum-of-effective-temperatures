@@ -1,7 +1,4 @@
 @use "./var";
-body {
-  // @include var.background("../img/background2");
-}
 
 .header {
   &__wrapper {
@@ -15,12 +12,6 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 }
-.container {
-}
-.logo {
-}
-.logo__image {
-}
 .nav {
   text-align: center;
   flex-basis: 50%;
@@ -33,12 +24,6 @@ body {
 .nav__item {
   font-size: 22px;
   font-weight: 500;
-
-  // background-color: #12683b;
-  // color: #fffffff1;
-  // line-height: 1;
-  // border-radius: 7px;
-  // padding: 7px;
 }
 .nav__link {
   outline: var.$opacity 2px solid;
@@ -273,8 +258,6 @@ input[type="number"]::-webkit-outer-spin-button {
 .client-data {
   grid-area: client;
   display: flex;
-  // display: grid;
-  // grid-template-columns: repeat(auto-fill, 180px);
   justify-content: space-evenly;
 
   gap: 5px 15px;
@@ -292,11 +275,6 @@ input[type="number"]::-webkit-outer-spin-button {
     grid-template-columns: repeat(2, 180px);
     grid-template-rows: repeat(2, 1fr);
   }
-  @media (max-width: 950px) {
-    // justify-content: space-around;
-    // grid-template-columns: repeat(auto-fit, 180px);
-    // grid-template-rows: 1fr;
-  }
   @media (max-width: 560px) {
     grid-template-columns: repeat(auto-fill, 180px);
     grid-template-rows: auto;
@@ -307,13 +285,6 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   max-width: 180px;
   flex-direction: column;
-}
-
-.client-data__farm {
-}
-.client-data__name {
-}
-.client-data__phone {
 }
 
 .output {
@@ -354,9 +325,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .method {
-  // font-weight: 600;
-  // font-size: 22px;
-  // margin-bottom: 20px;
   display: flex;
   justify-content: center;
   gap: 5px 15px;
@@ -463,8 +431,6 @@ legend {
   }
 }
 
-/* HTML: <div class="loader"></div> */
-/* HTML: <div class="loader"></div> */
 .loader {
   display: none;
   margin: 0 auto 25px;
