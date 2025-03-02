@@ -2,17 +2,25 @@ import Chart from 'chart.js/auto';
 import { chartObj } from './main.js';
 
 export function PrintGraph(data) {
+  console.log('data', data)
   const newData = RemoveRepeatingGroups(data, 5);
   if (chartObj.chart) {
     chartObj.chart.destroy();
   }
+  console.log('newData', newData)
   chartObj.chart = new Chart(document.getElementById('graph'), CreateChartConfig(newData));
 }
 
-function RemoveRepeatingGroups(data, limit = 10) {
+function DeleteZeroFromStart(data) {
   let temp = data.temp.filter(item => item !== 0);
   let differenceDays = data.temp.length - temp.length;
   let date = data.date.slice(differenceDays);
+  return { temp, date }
+}
+
+function RemoveRepeatingGroups(data, limit = 10) {
+  let { temp, date } = DeleteZeroFromStart(data);
+  const tempLengthAfterZero = temp.length;
 
   while (true) {
     let lastValue = temp[temp.length - 1];
@@ -31,7 +39,7 @@ function RemoveRepeatingGroups(data, limit = 10) {
     }
   }
 
-  differenceDays = data.temp.length - temp.length;
+  let differenceDays = tempLengthAfterZero - temp.length;
   date = date.slice(0, date.length - differenceDays);
 
   return { temp, date };

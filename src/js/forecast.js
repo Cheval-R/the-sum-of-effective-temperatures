@@ -14,6 +14,7 @@ Date.prototype.withoutTime = function () {
 export async function CalculateByYear(dateRangeData) {
   try {
     if (IsPreviousDays(dateRangeData.startDateMinus)) {
+      console.log(dateRangeData, 'dateRangeData')
       const weatherData = await CalculateByPeriod(dateRangeData);
       if (!weatherData) {
         throw new Error('Не удалось получить погодные данные. Попробуйте позже или измените параметры');
@@ -195,9 +196,11 @@ function LinearRegression(x, y) {
 
 function IsPreviousDays(date) {
   const
-    today = new Date().withoutTime().getDate(),
-    chosenDay = new Date(date).withoutTime().getDate();
+    today = new Date().withoutTime().getTime(),
+    chosenDay = new Date(date).withoutTime().getTime();
 
+  console.log('today', today)
+  console.log('chosenDay', chosenDay)
   if (chosenDay < today)
     return true;
 

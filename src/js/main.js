@@ -49,21 +49,20 @@ function GetDate(startDate, endDate) {
     endDatePoint: endDate,
     endDateMinus: DateParseForAPI(endDate),
   }
-
+  const
+    selectedYear = new Date(data.startDateMinus).getFullYear(),
+    currentYear = new Date().getFullYear();
   if (!byPeriod.checked) {
-    const
-      selectedYear = new Date(data.startDateMinus).getFullYear(),
-      currentYear = new Date().getFullYear();
-
     if (selectedYear === currentYear) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      if (new Date(data.startDatePoint).withoutTime().getDate() < new Date().withoutTime().getDate()) {
+      if (new Date(data.startDatePoint).withoutTime().getTime() < new Date().withoutTime().getTime()) {
         data.endDateMinus = yesterday.toLocaleDateString('en-CA', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
         });
+        console.log('endDateMinus', data.endDateMinus)
       }
     }
     else {
@@ -79,7 +78,24 @@ function DateParseForAPI(date) {
   return `${year}-${month}-${day}`;
 }
 
+
 // ! Вывод результата
+
+function GetPluralValues(count, rules) {
+  const result = new Intl.PluralRules('ru-RU').select(count);
+  switch (result) {
+    case 'one': {
+      return `${count} ${rules[0]}`
+    }
+    case 'few': {
+      return `${count} ${rules[1]}`
+    }
+    default: {
+      return `${count} ${rules[2]}`
+    }
+  }
+}
+
 export function PrintResult(data) {
   PrintEffectiveTemp(data, OptimalHarvestingTiming(data));
   PrintGraph(data);
@@ -93,21 +109,21 @@ function PrintEffectiveTemp(totalData, optimalHarvestingTiming) {
   document.getElementById('output').style.display = 'block'
   document.getElementById('output__sum').innerHTML =
     `
-    ${introWord} <u>${totalData.date[0]}</u> до <u>${totalData.date.at(-1)}</u> за ${totalData.date.length} дней накопилось ${totalData.sumEffectiveTemp.toFixed(0)}°C эффективных температур.
+    ${introWord} <u>${totalData.date[0]}</u> до <u> ${totalData.date.at(-1)}</u> за ${GetPluralValues(totalData.date.length, ["день", "дня", "дней"])} накопилось ${totalData.sumEffectiveTemp.toFixed(0)}°C эффективных температур.
     `;
 
   if (!optimalHarvestingTiming) {
     document.getElementById('output__optimal').innerHTML =
       `
-      Оптимальные сроки уборки кукурузы на силос <b>не определены</b>
-      `;
+      Оптимальные сроки уборки кукурузы на силос < b > не определены</b >
+        `;
   } else {
     console.log('optimalHarvestingTiming', optimalHarvestingTiming)
     document.getElementById('output').style.display = 'block'
     document.getElementById('output__optimal').innerHTML =
       `
-    Оптимальный срок уборки кукурузы на силос с <u>${optimalHarvestingTiming.optimalStartDate}</u> до <u>${optimalHarvestingTiming.optimalEndDate}</u>
-    `;
+    Оптимальный срок уборки кукурузы на силос с <u> ${optimalHarvestingTiming.optimalStartDate}</u> до <u> ${optimalHarvestingTiming.optimalEndDate}</u>
+        `;
   }
 }
 
